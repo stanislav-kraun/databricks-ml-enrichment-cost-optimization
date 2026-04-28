@@ -1,6 +1,6 @@
 from pyspark.sql import SparkSession
 
-from ml_feature_enrichment.utils import get_logger
+from ml_feature_enrichment.runtime import get_logger
 
 logger = get_logger(__name__)
 

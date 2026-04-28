@@ -62,7 +62,7 @@ def test_direct_publish_partial_failure_exposes_split_brain_window(spark, tmp_pa
     monkeypatch.setattr(pipeline_mod, "check_lookup_size_postrun", lambda *_args, **_kwargs: None)
 
     with pytest.raises(RuntimeError, match="simulated lookup write failure"):
-        pipeline_mod.run(spark, cfg)
+        pipeline_mod.run(spark, cfg, run_env="dev")
 
     output_rows = spark.read.format("delta").load(output_path).count()
     lookup_rows = spark.read.format("delta").load(lookup_path).count()

@@ -14,7 +14,8 @@
         "spark_conf": {
           "spark.sql.adaptive.enabled": "true",
           "spark.sql.adaptive.coalescePartitions.enabled": "true",
-          "spark.sql.adaptive.skewJoin.enabled": "true"
+          "spark.sql.adaptive.skewJoin.enabled": "true",
+          "spark.sql.autoBroadcastJoinThreshold": "268435456"
         },
         "aws_attributes": {
           "availability": "ON_DEMAND"
@@ -35,6 +36,7 @@
         "package_name": "ml_feature_enrichment",
         "entry_point": "run",
         "parameters": [
+          "--env", "{{job.parameters.env}}",
           "--config", "/dbfs/configs/pipeline_config.yaml"
         ]
       }

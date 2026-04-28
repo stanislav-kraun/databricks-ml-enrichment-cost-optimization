@@ -1,6 +1,7 @@
 feature_batch_path: "/mnt/delta/ml/feature_batch"
 historical_events_path: "/mnt/delta/events/historical_events"
 output_path: "/mnt/delta/ml/ml_features_enriched"
+lookup_grain: "campaign"
 
 spark:
   app_name: "ml_feature_enrichment"
@@ -8,4 +9,13 @@ spark:
   broadcast_lookup_threshold_bytes: 268435456
   broadcast_guard_warning_ratio: 0.8
   lookup_materialized_overwrite_schema: false
-  lookup_materialized_path: "/mnt/delta/ml/historical_lookup_campaign"
+  lookup_materialized_path: "/mnt/delta/ml/ml_features_enriched__lookup_materialized"
+
+environments:
+  prod: {}
+  dev:
+    feature_batch_path: "/mnt/delta/dev/ml/feature_batch"
+    historical_events_path: "/mnt/delta/dev/events/historical_events"
+    output_path: "/mnt/delta/dev/ml/ml_features_enriched"
+    spark:
+      lookup_materialized_path: "/mnt/delta/dev/ml/ml_features_enriched__lookup_materialized"

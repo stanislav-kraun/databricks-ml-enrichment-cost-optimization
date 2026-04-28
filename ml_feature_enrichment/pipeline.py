@@ -1,20 +1,15 @@
 import argparse
 
-import yaml
 from pyspark.sql import SparkSession
 from pyspark.storagelevel import StorageLevel
 
+from ml_feature_enrichment.config import load_config, merge_pipeline_config
 from ml_feature_enrichment.guardrails import check_lookup_size_postrun
+from ml_feature_enrichment.runtime import get_logger, get_spark_session
 from ml_feature_enrichment.schemas import FEATURE_BATCH_SCHEMA, HISTORICAL_EVENTS_SCHEMA
 from ml_feature_enrichment.transform import build_historical_lookup, enrich_features
-from ml_feature_enrichment.utils import get_logger, get_spark_session
 
 logger = get_logger(__name__)
-
-
-def load_config(path: str) -> dict:
-    with open(path) as f:
-        return yaml.safe_load(f)
 
 
 def _overwrite_delta(df, path: str, *, overwrite_schema: bool) -> None:
@@ -26,8 +21,14 @@ def _overwrite_delta(df, path: str, *, overwrite_schema: bool) -> None:
     )
 
 
-def run(spark: SparkSession, config: dict) -> None:
-    logger.info("Starting ml feature enrichment pipeline")
+def run(spark: SparkSession, config: dict, *, run_env: str) -> None:
+    logger.info(
+        "Starting ml feature enrichment pipeline (env=%s, output_path=%s)",
+        run_env,
+        config.get("output_path"),
+    )
+    if config.get("lookup_grain") != "campaign":
+        raise ValueError("Unsupported lookup_grain; expected 'campaign' for this pipeline")
 
     feature_batch = (
         spark.read.format("delta")
@@ -65,14 +66,16 @@ def run(spark: SparkSession, config: dict) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True)
+    parser.add_argument("--env", required=True, choices=["dev", "prod"])
     args = parser.parse_args()
 
-    config = load_config(args.config)
+    raw_config = load_config(args.config)
+    config = merge_pipeline_config(raw_config, args.env)
     spark = get_spark_session(
         app_name=config["spark"]["app_name"],
         shuffle_partitions=config["spark"]["shuffle_partitions"],
     )
-    run(spark, config)
+    run(spark, config, run_env=args.env)
 
 
 if __name__ == "__main__":
