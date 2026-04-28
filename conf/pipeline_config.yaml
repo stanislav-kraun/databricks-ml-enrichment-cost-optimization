@@ -1,0 +1,7 @@
+feature_batch_path: "/mnt/delta/ml/feature_batch"
+historical_events_path: "/mnt/delta/events/historical_events"
+output_path: "/mnt/delta/ml/ml_features_enriched"
+
+spark:
+  app_name: "ml_feature_enrichment"
+  shuffle_partitions: 400
