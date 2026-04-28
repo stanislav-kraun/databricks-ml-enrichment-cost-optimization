@@ -1,3 +1,12 @@
+"""StructTypes for Delta loads in the enrichment pipeline.
+
+This pipeline only reads the fields declared below. Additional upstream columns are tolerated and ignored by this
+job (they remain in upstream storage). Breaking upstream changes to required fields (rename/removal/type drift) must
+be handled by updating this contract and shipping a new pipeline version.
+
+`nullable=False` documents business intent; Spark does not strictly enforce nullability on read.
+"""
+
 from pyspark.sql.types import (
     DoubleType,
     LongType,

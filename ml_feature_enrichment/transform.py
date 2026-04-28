@@ -1,19 +1,24 @@
-from pyspark.sql import DataFrame
+from pyspark.sql import DataFrame, functions as F
 
-from ml_feature_enrichment.utils import get_logger
+from ml_feature_enrichment.runtime import get_logger
 
 logger = get_logger(__name__)
 
 
-def enrich_features_baseline_raw_join(
-    feature_batch: DataFrame,
-    historical_events: DataFrame,
-) -> DataFrame:
-    """Pre-optimization path: inner join to raw event grain (shuffle-heavy under skew)."""
-    logger.info("Baseline raw join on campaign_id (event-level RHS)")
-    return feature_batch.join(historical_events, on="campaign_id", how="inner")
+def build_historical_lookup(historical_events: DataFrame) -> DataFrame:
+    logger.info("Building compact historical lookup by campaign_id")
+    # Pre-aggregate large scale history to campaign grain so join side becomes compact.
+    return (
+        historical_events.filter(F.col("campaign_id").isNotNull())
+        .groupBy("campaign_id")
+        .agg(
+            F.sum("event_count").alias("historical_event_count"),
+            F.max("event_ts").alias("last_event_ts"),
+        )
+    )
 
 
-def enrich_features(feature_batch: DataFrame, historical_events: DataFrame) -> DataFrame:
-    """Baseline pipeline: raw join on campaign_id."""
-    return enrich_features_baseline_raw_join(feature_batch, historical_events)
+def enrich_features(feature_batch: DataFrame, historical_lookup: DataFrame) -> DataFrame:
+    logger.info("Join on campaign_id using compact lookup")
+    # Keep semantics explicit: only campaigns present in lookup survive.
+    return feature_batch.join(historical_lookup, on="campaign_id", how="inner")

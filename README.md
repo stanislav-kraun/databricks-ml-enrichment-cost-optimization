@@ -1,6 +1,6 @@
 # Business Case: Runtime and Compute Cost Reduction on Databricks
 
-[![CI](https://github.com/stanislav-kraun/databricks-ml-enrichment-cost-optimization/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/stanislav-kraun/databricks-ml-enrichment-cost-optimization/actions/workflows/ci.yml)
+[![CI](https://github.com/stanislav-kraun/databricks-ml-feature-enrichment-optimization/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/stanislav-kraun/databricks-ml-feature-enrichment-optimization/actions/workflows/ci.yml)
 
 Databricks pipeline that runs every 4 hours to enrich a refreshed ML feature batch against a historical events table.
 
@@ -8,15 +8,16 @@ This repository reproduces a real production fintech optimization case in a publ
 
 ## Scope: in-repo vs outside
 
-| Topic | In this repo | Prod / NDA analogue |
+| Topic | In this repo | In production (NDA analogue) |
 |---|---|---|
-| Pipeline transform logic | Yes | Same business logic in managed repo |
-| Tests and CI | Yes | Internal CI/CD adds deploy and environment promotion |
-| Upstream ingestion / lineage | Consumes pre-built Delta inputs | Source ingestion (CDC/streaming/DLT) is upstream |
-| Data quality ownership | Assumes source-level contract, enforces transform-level correctness and fail-fast behavior | Source-level DQ contract enforced in ingestion/DLT layer |
-| Observability contract | Public-safe contract only | Metrics, alerting, runbook ownership |
-| IAM / secrets / network | Not included | Managed via Databricks identity and network controls |
-| Data / PII | Not included | Sanitized extraction only |
+| Pipeline transform logic | Implemented end-to-end | Same business logic in managed repository |
+| Tests and CI | Compact, high-signal test set + CI | Full CI/CD with deploy and environment promotion |
+| Upstream ingestion / lineage | Reads prepared Delta inputs | Source ingestion (CDC/streaming/DLT) handled upstream |
+| Data quality ownership | Enforces transform-level contract and fail-fast checks | Source-level DQ contract enforced in ingestion layer |
+| Publish boundary | Direct dual-write (public-case simplification) | Staged publish boundary to reduce partial-update windows |
+| Observability | Public-safe guardrails and checks | Full metrics, alerting, and runbook ownership |
+| IAM / secrets / network | Intentionally omitted | Managed via Databricks identity and network controls |
+| Data / PII | Not included | Sanitized internal datasets only |
 
 ## Stack
 
