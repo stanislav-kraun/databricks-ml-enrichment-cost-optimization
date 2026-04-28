@@ -1,0 +1,53 @@
+{
+  "name": "ml-feature-enrichment",
+  "job_clusters": [
+    {
+      "job_cluster_key": "feature_enrichment_cluster",
+      "new_cluster": {
+        "spark_version": "14.3.x-photon-scala2.12",
+        "node_type_id": "m5d.2xlarge",
+        "driver_node_type_id": "m5d.2xlarge",
+        "autoscale": {
+          "min_workers": 8,
+          "max_workers": 12
+        },
+        "spark_conf": {
+          "spark.sql.adaptive.enabled": "true",
+          "spark.sql.adaptive.coalescePartitions.enabled": "true",
+          "spark.sql.adaptive.skewJoin.enabled": "true"
+        },
+        "aws_attributes": {
+          "availability": "ON_DEMAND"
+        }
+      }
+    }
+  ],
+  "tasks": [
+    {
+      "task_key": "enrich_features",
+      "job_cluster_key": "feature_enrichment_cluster",
+      "libraries": [
+        {
+          "whl": "dbfs:/wheels/ml_feature_enrichment_optimization-0.1.0-py3-none-any.whl"
+        }
+      ],
+      "python_wheel_task": {
+        "package_name": "ml_feature_enrichment",
+        "entry_point": "run",
+        "parameters": [
+          "--config", "/dbfs/configs/pipeline_config.yaml"
+        ]
+      }
+    }
+  ],
+  "schedule": {
+    "quartz_cron_expression": "0 0 0/4 * * ?",
+    "timezone_id": "UTC",
+    "pause_status": "UNPAUSED"
+  },
+  "max_concurrent_runs": 1,
+  "tags": {
+    "team": "ml-platform",
+    "pipeline": "feature-enrichment"
+  }
+}
