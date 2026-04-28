@@ -8,8 +8,8 @@
         "node_type_id": "m5d.2xlarge",
         "driver_node_type_id": "m5d.2xlarge",
         "autoscale": {
-          "min_workers": 8,
-          "max_workers": 12
+          "min_workers": 6,
+          "max_workers": 8
         },
         "spark_conf": {
           "spark.sql.adaptive.enabled": "true",
