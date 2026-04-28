@@ -19,9 +19,11 @@ def merge_pipeline_config(raw: dict[str, Any], env: str) -> dict[str, Any]:
         raise ValueError(f"Unknown environment {env!r}; expected one of: {sorted(overlays)!r}")
     overlay = overlays[env] or {}
 
+    # Top-level keys represent default (prod-like) values.
     base = {k: v for k, v in raw.items() if k != "environments"}
     merged = dict(base)
     for key, value in overlay.items():
+        # Merge nested spark overrides without losing default keys.
         if key == "spark" and isinstance(value, dict):
             merged["spark"] = {**(merged.get("spark") or {}), **value}
         else:

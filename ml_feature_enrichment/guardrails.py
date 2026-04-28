@@ -6,6 +6,7 @@ logger = get_logger(__name__)
 
 
 def _read_delta_size_bytes(spark: SparkSession, lookup_delta_path: str) -> int:
+    # Delta metadata gives exact table size without data scan.
     detail = spark.sql(f"DESCRIBE DETAIL delta.`{lookup_delta_path}`")
     row = detail.select("sizeInBytes").collect()[0]
     return int(row["sizeInBytes"])
@@ -32,6 +33,7 @@ def check_lookup_size_postrun(
         "estimate_source": "delta_describe_detail",
     }
 
+    # Intentional behavior: alerting/visibility, not blocking writes.
     if utilization >= 1.0:
         logger.warning(
             "BROADCAST_GUARD_ALERT_POSTRUN: lookup exceeds threshold: exact_size_bytes=%s, threshold_bytes=%s",

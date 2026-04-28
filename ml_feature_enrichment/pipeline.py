@@ -7,7 +7,10 @@ from ml_feature_enrichment.config import load_config, merge_pipeline_config
 from ml_feature_enrichment.guardrails import check_lookup_size_postrun
 from ml_feature_enrichment.runtime import get_logger, get_spark_session
 from ml_feature_enrichment.schemas import FEATURE_BATCH_SCHEMA, HISTORICAL_EVENTS_SCHEMA
-from ml_feature_enrichment.transform import build_historical_lookup, enrich_features
+from ml_feature_enrichment.transform import (
+    build_historical_lookup,
+    enrich_features,
+)
 
 logger = get_logger(__name__)
 
@@ -30,6 +33,7 @@ def run(spark: SparkSession, config: dict, *, run_env: str) -> None:
     if config.get("lookup_grain") != "campaign":
         raise ValueError("Unsupported lookup_grain; expected 'campaign' for this pipeline")
 
+    # Read batch and history with explicit schemas to keep input contract stable.
     feature_batch = (
         spark.read.format("delta")
         .schema(FEATURE_BATCH_SCHEMA)
@@ -41,6 +45,8 @@ def run(spark: SparkSession, config: dict, *, run_env: str) -> None:
         .load(config["historical_events_path"])
     )
 
+    # Production trade-off in this case: full lookup rebuild each run for predictable semantics
+    # and lower operational risk versus stateful incremental logic.
     historical_lookup = build_historical_lookup(historical_events).persist(StorageLevel.MEMORY_AND_DISK)
     lookup_path = config["spark"]["lookup_materialized_path"]
     lookup_overwrite_schema = config["spark"].get("lookup_materialized_overwrite_schema", False)
@@ -49,8 +55,11 @@ def run(spark: SparkSession, config: dict, *, run_env: str) -> None:
 
     try:
         enriched = enrich_features(feature_batch, historical_lookup)
+        # Public-case simplification: direct dual write keeps flow compact.
+        # Original production pipeline used a staged publish boundary.
         _overwrite_delta(enriched, config["output_path"], overwrite_schema=False)
         _overwrite_delta(historical_lookup, lookup_path, overwrite_schema=lookup_overwrite_schema)
+        # Post-run guard is visibility-first: warn when lookup grows toward threshold.
         check_lookup_size_postrun(
             spark,
             lookup_delta_path=lookup_path,
@@ -58,6 +67,7 @@ def run(spark: SparkSession, config: dict, *, run_env: str) -> None:
             warning_ratio=config["spark"]["broadcast_guard_warning_ratio"],
         )
     finally:
+        # Never leak persisted DataFrame on failures.
         historical_lookup.unpersist()
 
     logger.info("Pipeline complete")

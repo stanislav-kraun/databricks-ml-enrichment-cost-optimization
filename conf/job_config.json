@@ -29,7 +29,7 @@
       "job_cluster_key": "feature_enrichment_cluster",
       "libraries": [
         {
-          "whl": "dbfs:/wheels/ml_feature_enrichment_optimization-0.1.0-py3-none-any.whl"
+          "whl": "dbfs:/wheels/ml_feature_enrichment_optimization-2.0.0-py3-none-any.whl"
         }
       ],
       "python_wheel_task": {

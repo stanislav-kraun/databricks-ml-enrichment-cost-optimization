@@ -1,6 +1,5 @@
-from datetime import datetime
-
 import pytest
+from datetime import datetime
 
 from ml_feature_enrichment import pipeline as pipeline_mod
 
