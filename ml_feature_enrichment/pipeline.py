@@ -4,7 +4,7 @@ import yaml
 from pyspark.sql import SparkSession
 
 from ml_feature_enrichment.schemas import FEATURE_BATCH_SCHEMA, HISTORICAL_EVENTS_SCHEMA
-from ml_feature_enrichment.transform import enrich_features
+from ml_feature_enrichment.transform import build_historical_lookup, enrich_features
 from ml_feature_enrichment.utils import get_logger, get_spark_session
 
 logger = get_logger(__name__)
@@ -29,7 +29,8 @@ def run(spark: SparkSession, config: dict) -> None:
         .load(config["historical_events_path"])
     )
 
-    enriched = enrich_features(feature_batch, historical_events)
+    historical_lookup = build_historical_lookup(historical_events)
+    enriched = enrich_features(feature_batch, historical_lookup)
 
     (
         enriched.write.format("delta")

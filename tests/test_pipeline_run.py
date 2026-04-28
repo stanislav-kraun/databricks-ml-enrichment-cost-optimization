@@ -34,8 +34,10 @@ def test_run_reads_sources_and_writes_output(monkeypatch) -> None:
         historical_events,
     ]
 
+    lookup = _Frame()
     enriched = _Frame()
-    monkeypatch.setattr(pipeline_mod, "enrich_features", lambda _a, _b: enriched)
+    monkeypatch.setattr(pipeline_mod, "build_historical_lookup", lambda _events: lookup)
+    monkeypatch.setattr(pipeline_mod, "enrich_features", lambda _batch, _lookup: enriched)
 
     config = {
         "feature_batch_path": "/tmp/feature_batch",
