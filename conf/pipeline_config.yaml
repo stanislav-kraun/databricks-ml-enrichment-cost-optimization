@@ -5,3 +5,7 @@ output_path: "/mnt/delta/ml/ml_features_enriched"
 spark:
   app_name: "ml_feature_enrichment"
   shuffle_partitions: 400
+  broadcast_lookup_threshold_bytes: 268435456
+  broadcast_guard_warning_ratio: 0.8
+  lookup_materialized_overwrite_schema: false
+  lookup_materialized_path: "/mnt/delta/ml/historical_lookup_campaign"
